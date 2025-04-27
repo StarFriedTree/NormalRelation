@@ -11,7 +11,7 @@ namespace Normalizer
 
             const std::string& getTitle () const { return Title; }
             const std::set<Attribute>& getAttributes () const {return attributes; }
-            const std::set<Attribute*> getAttributePtrs () const;
+            const std::set<const Attribute*> getAttributePtrs () const;
 
             const std::set<FD>& getFDs () const { return FDs; }
             const std::set<MVD>& getMVDs () const { return MVDs; }

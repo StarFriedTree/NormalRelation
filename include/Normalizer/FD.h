@@ -15,6 +15,6 @@ namespace Normalizer
 
             bool isTrivial () const;
             bool isSimplifiable () const;
-            void simplify (); //remove attributes from right that are also in left
+            bool simplify (); //remove attributes from right that are also in left
     };
 }

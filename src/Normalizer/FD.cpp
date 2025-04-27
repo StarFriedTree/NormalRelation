@@ -60,7 +60,7 @@ namespace Normalizer
         );
         return !intersection.empty();
     }
-    void FD::simplify ()
+    bool FD::simplify ()
     {
         std::set<Attribute*> intersection;
         std::set_intersection (
@@ -68,8 +68,11 @@ namespace Normalizer
             left.begin(), left.end(),
             std::inserter(intersection, intersection.begin())
         );
+
+        if (intersection.empty()) return false;
         
         for (auto& item : intersection)
             right.erase(item);
+        return true;
     } //remove attributes from right that are also in left
 }
