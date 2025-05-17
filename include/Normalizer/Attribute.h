@@ -28,13 +28,13 @@ namespace Normalizer
                 return name > that.getName();
             }
 
-			std::ostream& operator<< (std::ostream& os) const
-			{
-				os << name;
-				return os;
-			}
-
         private:
             std::string name;
     };
+
+    inline std::ostream& operator<<(std::ostream& os, const Normalizer::Attribute& attr)
+    {
+        os << attr.getName();
+        return os;
+    }
 }

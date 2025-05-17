@@ -52,10 +52,21 @@ namespace Normalizer
     {
         std::stringstream out;
 
-        out << Util::printSet(left, ' ', ' ') << " --> " << Util::printSet(right, ' ', ' ');
+        auto printPtrSet = [](const std::set<Attribute*>& s) {
+            std::stringstream ss;
+            bool first = true;
+            for (const auto* attr : s) {
+                if (!first) ss << ", ";
+                if (attr) ss << attr->getName();
+                first = false;
+            }
+            return ss.str();
+            };
 
+        out << printPtrSet(left) << " --> " << printPtrSet(right);
         return out.str();
     }
+
 
     bool FD::isTrivial () const
     {

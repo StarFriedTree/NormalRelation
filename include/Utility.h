@@ -3,6 +3,7 @@
 #include <set>
 #include <sstream>
 #include <algorithm>
+#include <vector>
 
 namespace Util
 {
@@ -24,10 +25,28 @@ namespace Util
         );
     }
 
+    // Checks if all *ptr values in A are present in B
+    template <typename T>
+    bool ptrSetIsSubsetByValue(const std::set<T*>& A, const std::set<T*>& B)
+    {
+        // Build a set of values from B
+        std::set<T> bValues;
+        for (const auto* b : B) {
+            if (b) bValues.insert(*b);
+        }
+        
+        for (const auto* a : A) {
+            if (!a || bValues.find(*a) == bValues.end())
+                return false;
+        }
+        return true;
+    }
+
+
     template <typename T>
     std::set<std::set<T>> getPowerset (const std::set<T>& set)
     {
-        std::vector<std::set<T>> powerset = { {} };
+        std::vector<std::set<T>> powerset = { std::set<T>() };
 		powerset.reserve(1ULL << set.size()); // 2^n
 
         for (const auto& item : set)
@@ -58,10 +77,4 @@ namespace Util
         return out.str();
     }
 
-	template <typename T>
-	std::ostream& operator<< (std::ostream& os, const std::set<T>& set)
-	{
-		os << Util::printSet(set);
-		return os;
-	}
 }

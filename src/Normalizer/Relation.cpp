@@ -157,7 +157,7 @@ namespace Normalizer
     std::string Relation::display() const
     {
         std::stringstream out;
-        out << Title << attributes << '\n\n';
+        out << Title << Util::printSet(attributes) << "\n\n";
         for (auto i = FDs.begin(); i != FDs.end(); i++)
         {
             out << '\t' << (*i).display() << '\n';
@@ -170,14 +170,16 @@ namespace Normalizer
         return out.str();
     }
 
-    // bool Relation::isProjection (const Relation& parent) const
-    // {
+    bool Relation::isProjection(const Relation& parent) const
+    {
+        return Util::isSubset(attributes, parent.attributes);
+    }
 
-    // }
-    // bool Relation::isProjection (const std::set<Attribute>& attribs) const
-    // {
 
-    // }
+    bool Relation::isProjection (const std::set<Attribute>& attribs) const
+    {
+		return Util::isSubset(attributes, attribs);
+    }
 
     bool Relation::isValidFD (const FD& fd) const
     {
