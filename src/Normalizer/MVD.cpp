@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "Utility.h"
 #include <sstream>
+#include <vector>
 
 namespace Normalizer
 {
@@ -68,14 +69,35 @@ namespace Normalizer
     {
         return (left == that.getLeft() && right == that.getRight());
     }
+    bool MVD::operator< (const MVD& that) const
+    {
+
+        auto nameSeq = [](std::vector<Attribute*>& vec) {
+            std::vector<std::string> names;
+            for (const auto* attr : vec)
+                names.push_back(attr->getName());
+            return names;
+        };
+
+        auto leftNames = nameSeq(left);
+        auto thatLeftNames = nameSeq(that.left);
+        if (leftNames < thatLeftNames)
+            return true;
+        if (thatLeftNames < leftNames)
+            return false;
+
+        auto rightNames = nameSeq(right);
+        auto thatRightNames = nameSeq(that.right);
+        return rightNames < thatRightNames;
+    }
 
     bool MVD::isLeftSubset (const std::set<Attribute*>& attribs) const
     {
-        return isSubset (attribs, left);
+        return Util::isSubset (attribs, left);
     }
     bool MVD::isRightSubset (const std::set<Attribute*>& attribs) const
     {
-        return isSubset (attribs, right);
+        return Util::isSubset (attribs, right);
     }
 
     std::string MVD::display() const

@@ -26,6 +26,18 @@ namespace Normalizer
     {
         return left == that.getLeft() && right == that.getRight();
     }
+    bool FD::operator< (const FD& that) const
+    {
+        if (left.size() < that.getLeft().size()) return true;
+        if (left.size() > that.getLeft().size()) return false;
+
+        if (right.size() < that.getRight().size()) return true;
+        if (right.size() > that.getRight().size()) return false;
+        
+        if (*this == that) return false;
+
+        return (this < &that);
+    }
 
     std::string FD::display() const
     {

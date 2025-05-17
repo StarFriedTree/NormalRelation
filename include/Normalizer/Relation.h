@@ -22,6 +22,7 @@ namespace Normalizer
 
             bool removeAttribute (const Attribute& attrib);
             bool removeFD (const FD& fd);
+            bool removeMVD (const MVD& mvd);
             bool clearFDs ();
             bool clearMVDs ();
 

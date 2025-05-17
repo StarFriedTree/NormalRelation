@@ -26,6 +26,7 @@ namespace Normalizer
             bool containsAttribute (Attribute* attrib) const;
 
             bool operator== (const MVD& that) const;
+            bool operator< (const MVD& that) const;
 
             bool isLeftSubset (const std::set<Attribute*>& attribs) const;
             bool isRightSubset (const std::set<Attribute*>& attribs) const;
