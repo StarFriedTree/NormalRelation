@@ -1,5 +1,7 @@
 #include "Normalizer/Relation.h"
+#include "Normalizer/Normalize.h"
 #include <iostream>
+#include <set>
 
 using namespace Normalizer;
 
@@ -9,6 +11,7 @@ int main()
     Attribute one("one");
     Attribute two("two");
     Attribute three("three");
+    Attribute four("four");
 
     // Create a relation and add attributes
     Relation R("Count");
@@ -16,42 +19,47 @@ int main()
     R.addAttribute(two);
     R.addAttribute(three);
 
-    // Create another relation with a different 'two' (different pointer, same value)
-    Attribute othertwo("two");
-    Attribute four("four");
-    Relation R2("Other");
-    R2.addAttribute(one);
-    R2.addAttribute(othertwo);
-    R2.addAttribute(four);
+    // Add FDs to R: {one} -> {two}, {two} -> {three}, {one, three} -> {two}
+    FD fd1, fd2, fd3;
+    fd1.AddToLeft(&one);      fd1.AddToRight(&two);
+    fd2.AddToLeft(&two);      fd2.AddToRight(&three);
+    fd3.AddToLeft(&one); fd3.AddToLeft(&three); fd3.AddToRight(&two);
 
-    // Create an FD in R2: {one} -> {two}
-    FD fd_other;
-    fd_other.AddToLeft(&one);
-    fd_other.AddToRight(&othertwo);
+    R.addFD(fd1);
+    R.addFD(fd2);
+    R.addFD(fd3);
 
-    // Try to add this FD to R (should be validateable, not valid)
-    std::cout << "R.isValidFD(fd_other): " << R.isValidFD(fd_other) << '\n';
-    std::cout << "R.isValidateableFD(fd_other): " << R.isValidateableFD(fd_other) << '\n';
-    bool added = R.addFD(fd_other);
-    std::cout << "R.addFD(fd_other): " << added << '\n';
+    std::cout << "Initial Relation R:\n" << R.display();
 
-    // Try to add a non-validateable FD (with an attribute not in R)
-    FD fd_invalid;
-    fd_invalid.AddToLeft(&four);
-    fd_invalid.AddToRight(&one);
-    std::cout << "R.isValidateableFD(fd_invalid): " << R.isValidateableFD(fd_invalid) << '\n';
-    std::cout << "R.addFD(fd_invalid): " << R.addFD(fd_invalid) << '\n';
+    // Test findClosure: closure of {one}
+    std::set<Attribute*> closureInput;
+    for (auto* ptr : R.getAttributePtrs())
+        if (ptr->getName() == "one")
+            closureInput.insert(ptr);
 
-    // Search for attributes
-    std::cout << "R.searchAttribute(two): " << R.searchAttribute(two) << '\n';
-    std::cout << "R.searchAttribute(\"two\"): " << R.searchAttribute("two") << '\n';
-    std::cout << "R.searchAttribute(&two): " << R.searchAttribute(&two) << '\n';
-    std::cout << "R.searchAttribute(othertwo): " << R.searchAttribute(othertwo) << '\n';
-    std::cout << "R.searchAttribute(&othertwo): " << R.searchAttribute(&othertwo) << '\n';
-    std::cout << "R.searchAttribute(four): " << R.searchAttribute(four) << '\n';
+    auto closure = findClosure(closureInput, R.getFDs());
+    std::cout << "Closure of {one}: { ";
+    for (auto* attr : closure) std::cout << attr->getName() << " ";
+    std::cout << "}\n";
 
-    // Display the relation (attributes and FDs)
-    std::cout << "\nRelation R:\n" << R.display();
+    // Create a projection relation R1 with a subset of attributes
+    Relation R1("Projection");
+    R1.addAttribute(one);
+    R1.addAttribute(two);
+
+    std::cout << "\nBefore projection, R1:\n" << R1.display();
+
+    // Project FDs from R to R1
+    projectFDs(R, R1);
+    std::cout << "\nAfter projectFDs, R1:\n" << R1.display();
+
+    // Minimize the FDs in R1
+    R1.minimalBasisFDs();
+    std::cout << "\nAfter minimalBasisFDs, R1:\n" << R1.display();
+
+	// Minimize the FDs in R
+	R.minimalBasisFDs();
+    std::cout << "\nAfter minimalBasisFDs, R:\n" << R.display();
 
     return 0;
 }

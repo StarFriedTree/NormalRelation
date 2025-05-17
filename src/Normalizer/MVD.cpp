@@ -93,11 +93,11 @@ namespace Normalizer
 
     bool MVD::isLeftSubset (const std::set<Attribute*>& attribs) const
     {
-        return Util::isSubset (attribs, left);
+        return Util::isSubset (left, attribs);
     }
     bool MVD::isRightSubset (const std::set<Attribute*>& attribs) const
     {
-        return Util::isSubset (attribs, right);
+        return Util::isSubset (right, attribs);
     }
 
     std::string MVD::display() const

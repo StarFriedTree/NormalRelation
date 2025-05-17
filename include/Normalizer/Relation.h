@@ -11,7 +11,7 @@ namespace Normalizer
 
             const std::string& getTitle () const { return Title; }
             const std::set<Attribute>& getAttributes () const {return attributes; }
-            const std::set<const Attribute*> getAttributePtrs () const;
+            const std::set<Attribute*> getAttributePtrs () const;
 
             const std::set<FD>& getFDs () const { return FDs; }
             const std::set<MVD>& getMVDs () const { return MVDs; }
@@ -45,6 +45,8 @@ namespace Normalizer
 
             FD validateFD (const FD& fd) const;
             MVD validateMVD (const MVD& mvd) const;
+
+            void minimalBasisFDs ();
 
         private:
             std::string Title;

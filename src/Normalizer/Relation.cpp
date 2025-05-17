@@ -1,14 +1,15 @@
 #include "Normalizer/Relation.h"
 #include <sstream>
 #include "Utility.h"
+#include "Normalizer/Normalize.h"
 
 namespace Normalizer
 {
-    const std::set<const Attribute*> Relation::getAttributePtrs () const
+    const std::set<Attribute*> Relation::getAttributePtrs () const
     {
-        std::set<const Attribute*> attribPtrs;
+        std::set<Attribute*> attribPtrs;
         for (auto& attrib : attributes)
-            attribPtrs.insert(&attrib);
+            attribPtrs.insert(const_cast<Attribute*>(&attrib));
         return attribPtrs;
     }
 
@@ -183,8 +184,8 @@ namespace Normalizer
 
     bool Relation::isValidFD (const FD& fd) const
     {
-        std::set<const Attribute*> attribPtrs = getAttributePtrs();
-        for (const auto* attr : fd.getAllAttributes())
+        std::set<Attribute*> attribPtrs = getAttributePtrs();
+        for (auto* attr : fd.getAllAttributes())
             if (attribPtrs.find(attr) == attribPtrs.end())
                 return false;
         return true;
@@ -198,8 +199,8 @@ namespace Normalizer
     }
     bool Relation::isValidMVD (const MVD& mvd) const
     {
-        std::set<const Attribute*> attribPtrs = getAttributePtrs();
-        for (const auto* attr : mvd.getAllAttributes())
+        std::set<Attribute*> attribPtrs = getAttributePtrs();
+        for (auto* attr : mvd.getAllAttributes())
             if (attribPtrs.find(attr) == attribPtrs.end())
                 return false;
         return true;
@@ -246,4 +247,77 @@ namespace Normalizer
         }
         return result;
     }
+
+    void Relation::minimalBasisFDs()
+    {
+        // 1. Remove trivial and simplify FDs
+        for (auto it = FDs.begin(); it != FDs.end(); )
+        {
+            FD fd = *it;
+
+            if (fd.isTrivial()) 
+            {
+                it = FDs.erase(it);
+                continue;
+            }
+            else if (fd.isSimplifiable()) 
+            {
+                fd.simplify();
+                if (!(fd == *it)) 
+                {
+                    it = FDs.erase(it);
+                    addFD(fd);
+                    continue;
+                }
+            }
+
+            ++it;
+        }
+
+        // 2. Remove redundant FDs (those that follow from the rest)
+        for (auto it = FDs.begin(); it != FDs.end(); )
+        {
+            if (FDfollows(FDs, it)) {
+                it = FDs.erase(it);
+            }
+            else {
+                ++it;
+            }
+        }
+
+        // 3. Minimize left sides
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            for (auto it = FDs.begin(); it != FDs.end(); )
+            {
+                FD fd = *it;
+                
+                if (fd.getLeft().size() < 2) {
+                    ++it;
+                    continue;
+                }
+
+                bool reduced = false;
+                for (auto l = fd.getLeft().begin(); l != fd.getLeft().end(); ++l)
+                {
+                    FD reducedFD = fd;
+                    reducedFD.RemoveFromLeft(*l);
+
+                    if (FDfollows(FDs, reducedFD)) {
+                        // Replace with reduced FD
+                        it = FDs.erase(it);
+                        addFD(reducedFD);
+                        changed = true;
+                        reduced = true;
+                        break;
+                    }
+                }
+                if (!reduced)
+                    ++it;
+            }
+        }
+    }
+
 }
