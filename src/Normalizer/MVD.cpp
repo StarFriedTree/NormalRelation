@@ -72,9 +72,9 @@ namespace Normalizer
     bool MVD::operator< (const MVD& that) const
     {
 
-        auto nameSeq = [](std::vector<Attribute*>& vec) {
+        auto nameSeq = [](const auto& container) {
             std::vector<std::string> names;
-            for (const auto* attr : vec)
+            for (const auto* attr : container)
                 names.push_back(attr->getName());
             return names;
         };
@@ -103,19 +103,9 @@ namespace Normalizer
     std::string MVD::display() const
     {
         std::stringstream out;
-        for (auto i = left.begin(); i != left.end(); i++)
-        {
-            out << (*i)->getName();
-            if (std::next(i) != left.end())
-                out << ", ";
-        }
-        out << " -->> ";
-        for (auto i = right.begin(); i != right.end(); i++)
-        {
-            out << (*i)->getName();
-            if (std::next(i) != right.end())
-                out << ", ";
-        }
+        
+        out << Util::printSet(left, ' ', ' ') << " -->> " << Util::printSet(right, ' ', ' ');
+
         return out.str();
     }
 }

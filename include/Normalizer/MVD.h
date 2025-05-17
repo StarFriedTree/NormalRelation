@@ -9,6 +9,7 @@ namespace Normalizer
     {
         public:
             MVD () {};
+			virtual ~MVD() {};
 
             const std::set<Attribute*>& getLeft () const { return left; }
             const std::set<Attribute*>& getRight () const { return right; }

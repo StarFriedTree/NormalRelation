@@ -7,7 +7,7 @@ namespace Normalizer
     class Attribute
     {      
         public:
-            Attribute (const std::string& name) : name(name) {}
+            explicit Attribute (const std::string& name) : name(name) {}
 
             const std::string& getName () const
             {
@@ -27,6 +27,12 @@ namespace Normalizer
             {
                 return name > that.getName();
             }
+
+			std::ostream& operator<< (std::ostream& os) const
+			{
+				os << name;
+				return os;
+			}
 
         private:
             std::string name;

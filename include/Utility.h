@@ -7,7 +7,7 @@
 namespace Util
 {
     template <typename T>
-    bool isSuperset(const std::set<T>& A, const std::set<T>& B)
+    bool isSuperset (const std::set<T>& A, const std::set<T>& B)
     {
         return std::includes(
             A.begin(), A.end(),
@@ -16,7 +16,7 @@ namespace Util
     }
 
     template <typename T>
-    bool isSubset(const std::set<T>& A, const std::set<T>& B)
+    bool isSubset (const std::set<T>& A, const std::set<T>& B)
     {
         return std::includes(
             B.begin(), B.end(),
@@ -25,7 +25,7 @@ namespace Util
     }
 
     template <typename T>
-    std::set<std::set<T>> getPowerset(const std::set<T>& set)
+    std::set<std::set<T>> getPowerset (const std::set<T>& set)
     {
         std::vector<std::set<T>> powerset = { {} };
 		powerset.reserve(1ULL << set.size()); // 2^n
@@ -44,17 +44,24 @@ namespace Util
     }
 
     template <class T>
-    std::string printSet(const std::set<T>& set)
+    std::string printSet (const std::set<T>& set, char delim1 = '(', char delim2 = ')')
     {
         std::stringstream out;
-        out << " {";
+        out << ' ' << delim1;
         for (auto i = set.begin(); i != set.end(); i++)
         {
             out << *i;
             if (std::next(i) != set.end())
                 out << ", ";
         }
-        out << "} ";
+        out << delim2 << ' ';
         return out.str();
     }
+
+	template <typename T>
+	std::ostream& operator<< (std::ostream& os, const std::set<T>& set)
+	{
+		os << Util::printSet(set);
+		return os;
+	}
 }

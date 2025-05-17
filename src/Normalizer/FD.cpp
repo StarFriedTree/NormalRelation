@@ -2,6 +2,7 @@
 #include "Utility.h"
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 namespace Normalizer
 {
@@ -28,33 +29,31 @@ namespace Normalizer
     }
     bool FD::operator< (const FD& that) const
     {
-        if (left.size() < that.getLeft().size()) return true;
-        if (left.size() > that.getLeft().size()) return false;
+        auto nameSeq = [](const auto& container) {
+            std::vector<std::string> names;
+            for (const auto* attr : container)
+                names.push_back(attr->getName());
+            return names;
+            };
 
-        if (right.size() < that.getRight().size()) return true;
-        if (right.size() > that.getRight().size()) return false;
-        
-        if (*this == that) return false;
+        auto leftNames = nameSeq(left);
+        auto thatLeftNames = nameSeq(that.left);
+        if (leftNames < thatLeftNames)
+            return true;
+        if (thatLeftNames < leftNames)
+            return false;
 
-        return (this < &that);
+        auto rightNames = nameSeq(right);
+        auto thatRightNames = nameSeq(that.right);
+        return rightNames < thatRightNames;
     }
 
     std::string FD::display() const
     {
         std::stringstream out;
-        for (auto i = left.begin(); i != left.end(); i++)
-        {
-            out << (*i)->getName();
-            if (std::next(i) != left.end())
-                out << ", ";
-        }
-        out << " --> ";
-        for (auto i = right.begin(); i != right.end(); i++)
-        {
-            out << (*i)->getName();
-            if (std::next(i) != right.end())
-                out << ", ";
-        }
+
+        out << Util::printSet(left, ' ', ' ') << " --> " << Util::printSet(right, ' ', ' ');
+
         return out.str();
     }
 

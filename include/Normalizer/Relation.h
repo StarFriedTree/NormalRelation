@@ -44,7 +44,7 @@ namespace Normalizer
             bool isValidateableMVD (const MVD& mvd) const;
 
             FD validateFD (const FD& fd) const;
-            FD validateMVD (const MVD& mvd) const;
+            MVD validateMVD (const MVD& mvd) const;
 
         private:
             std::string Title;
