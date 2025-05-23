@@ -25,6 +25,42 @@ namespace Util
         );
     }
 
+    template <typename T>
+    std::set<T> setUnion(const std::set<T>& a, const std::set<T>& b)
+    {
+        std::set<T> result;
+        std::set_union(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            std::inserter(result, result.begin())
+        );
+        return result;
+    }
+
+    template <typename T>
+    std::set<T> setIntersection(const std::set<T>& a, const std::set<T>& b)
+    {
+        std::set<T> result;
+        std::set_intersection(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            std::inserter(result, result.begin())
+        );
+        return result;
+    }
+
+    template <typename T>
+    std::set<T> setDifference(const std::set<T>& a, const std::set<T>& b)
+    {
+        std::set<T> result;
+        std::set_difference(
+            a.begin(), a.end(),
+            b.begin(), b.end(),
+            std::inserter(result, result.begin())
+        );
+        return result;
+    }
+
     // Checks if all *ptr values in A are present in B
     template <typename T>
     bool ptrSetIsSubsetByValue(const std::set<T*>& A, const std::set<T*>& B)
@@ -63,7 +99,7 @@ namespace Util
     }
 
     template <class T>
-    std::string printSet (const std::set<T>& set, char delim1 = '(', char delim2 = ')')
+    std::string printSet (const std::set<T>& set, char start = '(', char end = ')', std::string delim = ", ")
     {
         std::stringstream out;
         out << ' ' << delim1;
@@ -71,7 +107,7 @@ namespace Util
         {
             out << *i;
             if (std::next(i) != set.end())
-                out << ", ";
+                out << delim;
         }
         out << delim2 << ' ';
         return out.str();

@@ -8,6 +8,7 @@ namespace Normalizer
     {
         public:    
             Relation (std::string title) : Title(title) {}
+            Relation (const Relation& copy);
 
             const std::string& getTitle () const { return Title; }
             const std::set<Attribute>& getAttributes () const {return attributes; }
@@ -48,10 +49,17 @@ namespace Normalizer
 
             void minimalBasisFDs ();
 
+            bool isGoodFD (std::set<FD>::const_iterator fd) const;
+            std::set<FD>::const_iterator findBadFD () const;
+
+            bool operator < (const Relation& that) const;
+
         private:
             std::string Title;
             std::set<Attribute> attributes;
             std::set<MVD> MVDs;
             std::set<FD> FDs;
     };
+
+    std::ostream& operator<< (std::ostream& os, const Relation& R);
 }

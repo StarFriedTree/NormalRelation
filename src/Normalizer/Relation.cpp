@@ -5,6 +5,17 @@
 
 namespace Normalizer
 {
+    Relation::Relation (const Relation& copy)
+    {
+        this->Title = copy.getTitle();
+        this->attributes = copy.getAttributes();
+		
+        for (auto& fd : copy.getFDs())
+            this->addFD(fd);
+		for (auto& mvd : copy.getMVDs())
+			this->addMVD(mvd);
+    }
+
     const std::set<Attribute*> Relation::getAttributePtrs () const
     {
         std::set<Attribute*> attribPtrs;
@@ -171,6 +182,12 @@ namespace Normalizer
         return out.str();
     }
 
+	std::ostream& operator<< (std::ostream& os, const Relation& R)
+	{
+		os << R.display();
+		return os;
+	}
+
     bool Relation::isProjection(const Relation& parent) const
     {
         return Util::isSubset(attributes, parent.attributes);
@@ -320,4 +337,36 @@ namespace Normalizer
         }
     }
 
+    bool Relation::isGoodFD(std::set<FD>::const_iterator fd) const
+    {
+        auto closure = findClosure(fd->getLeft(), FDs);
+
+        return closure == getAttributePtrs();
+
+    }
+    
+    std::set<FD>::const_iterator Relation::findBadFD() const
+    {
+        for (auto i = FDs.begin(); i != FDs.end(); i++)
+            if (!isGoodFD(i))
+                return i;
+        return FDs.end();
+    }
+
+    bool Relation::operator < (const Relation& that) const
+    {
+        if (this->Title < that.getTitle())
+            return true;
+        if (this->Title > that.getTitle())
+            return false;
+        if (attributes < that.attributes)
+            return true;
+        if (that.attributes < attributes)
+            return false;
+        if (FDs < that.FDs)
+            return true;
+        if (that.FDs < FDs)
+            return false;
+        return MVDs < that.MVDs;
+    }
 }

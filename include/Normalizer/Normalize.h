@@ -11,4 +11,6 @@ namespace Normalizer
 
     bool FDfollows (const std::set<FD>& set, std::set<FD>::const_iterator fd);
     bool FDfollows (const std::set<FD>& set, const FD& reducedFD);
+
+    std::set<Relation> bcnf (Relation& R);
 }
