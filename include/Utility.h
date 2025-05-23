@@ -99,17 +99,20 @@ namespace Util
     }
 
     template <class T>
-    std::string printSet (const std::set<T>& set, char start = '(', char end = ')', std::string delim = ", ")
+    std::string printSet (  const std::set<T>& set, 
+                            std::string start = " (", std::string end = ") ",
+                            std::string delim = ", "
+                         )
     {
         std::stringstream out;
-        out << ' ' << delim1;
+        out << start;
         for (auto i = set.begin(); i != set.end(); i++)
         {
             out << *i;
             if (std::next(i) != set.end())
                 out << delim;
         }
-        out << delim2 << ' ';
+        out << end;
         return out.str();
     }
 

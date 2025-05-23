@@ -50,6 +50,8 @@ namespace Normalizer
             void minimalBasisFDs ();
 
             bool isGoodFD (std::set<FD>::const_iterator fd) const;
+            bool isKey (std::set<Attribute*> attribs) const;
+			bool isKeybyValues(std::set<Attribute*> attribs) const;
             std::set<FD>::const_iterator findBadFD () const;
 
             bool operator < (const Relation& that) const;

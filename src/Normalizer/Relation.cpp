@@ -369,4 +369,15 @@ namespace Normalizer
             return false;
         return MVDs < that.MVDs;
     }
+
+    bool Relation::isKey(std::set<Attribute*> attribs) const
+    {
+		auto closure = findClosure(attribs, FDs);
+        return closure == getAttributePtrs();
+    }
+    bool Relation::isKeybyValues(std::set<Attribute*> attribs) const
+    {
+		auto closure = findClosure(attribs, FDs);
+		return Util::ptrSetIsSubsetByValue(getAttributePtrs(), closure) && closure.size() == attributes.size();
+    }
 }
