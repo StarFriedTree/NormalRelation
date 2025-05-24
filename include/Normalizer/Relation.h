@@ -11,6 +11,7 @@ namespace Normalizer
             Relation (const Relation& copy);
 
             const std::string& getTitle () const { return Title; }
+			void setTitle (const std::string& title) { Title = title; }
             const std::set<Attribute>& getAttributes () const {return attributes; }
             const std::set<Attribute*> getAttributePtrs () const;
 
@@ -48,11 +49,16 @@ namespace Normalizer
             MVD validateMVD (const MVD& mvd) const;
 
             void minimalBasisFDs ();
+            void minimalBasisMVDs ();
 
             bool isGoodFD (std::set<FD>::const_iterator fd) const;
             bool isKey (std::set<Attribute*> attribs) const;
 			bool isKeybyValues(std::set<Attribute*> attribs) const;
             std::set<FD>::const_iterator findBadFD () const;
+            std::set<MVD>::const_iterator findBadMVD() const;
+
+            void promoteFDsToMVDs ();
+            void SingletonRightMVDs ();
 
             bool operator < (const Relation& that) const;
 

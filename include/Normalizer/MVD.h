@@ -32,6 +32,8 @@ namespace Normalizer
             bool isLeftSubset (const std::set<Attribute*>& attribs) const;
             bool isRightSubset (const std::set<Attribute*>& attribs) const;
 
+            bool isTrivialMVD(const std::set<Attribute*>& attribs) const;
+
             std::string display() const;
         
         protected:

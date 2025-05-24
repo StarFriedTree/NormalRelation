@@ -100,6 +100,16 @@ namespace Normalizer
         return Util::isSubset (right, attribs);
     }
 
+    bool MVD::isTrivialMVD(const std::set<Attribute*>& attribs) const
+    {
+        if (Util::isSubset(right, left)) return true;
+        if (Util::ptrSetIsSubsetByValue(right, left)) return true;
+
+        if (getAllAttributes() == attribs) return true;
+        if (Util::ptrSetIsSubsetByValue(attribs, getAllAttributes())) return true;
+        return false;
+    }
+
     std::string MVD::display() const
     {
         std::stringstream out;
@@ -115,7 +125,7 @@ namespace Normalizer
             return ss.str();
             };
 
-        out << printPtrSet(left) << " --> " << printPtrSet(right);
+        out << printPtrSet(left) << " -->> " << printPtrSet(right);
         return out.str();
     }
 

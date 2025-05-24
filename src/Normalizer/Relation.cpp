@@ -2,6 +2,7 @@
 #include <sstream>
 #include "Utility.h"
 #include "Normalizer/Normalize.h"
+#include <cassert>
 
 namespace Normalizer
 {
@@ -265,7 +266,7 @@ namespace Normalizer
         return result;
     }
 
-    void Relation::minimalBasisFDs()
+    void Relation::minimalBasisFDs ()
     {
         // 1. Remove trivial and simplify FDs
         for (auto it = FDs.begin(); it != FDs.end(); )
@@ -353,6 +354,14 @@ namespace Normalizer
         return FDs.end();
     }
 
+    std::set<MVD>::const_iterator Relation::findBadMVD() const
+    {
+        for (auto i = MVDs.begin(); i != MVDs.end(); i++)
+            if (!isKey(i->getLeft()))
+                return i;
+        return MVDs.end();
+    }
+
     bool Relation::operator < (const Relation& that) const
     {
         if (this->Title < that.getTitle())
@@ -379,5 +388,105 @@ namespace Normalizer
     {
 		auto closure = findClosure(attribs, FDs);
 		return Util::ptrSetIsSubsetByValue(getAttributePtrs(), closure) && closure.size() == attributes.size();
+    }
+
+
+    void Relation::promoteFDsToMVDs()
+    {
+		minimalBasisFDs();
+
+        auto allAttribs = getAttributePtrs();
+
+        for (auto& fd : FDs)
+            if (!isKey(fd.getLeft()) && !fd.isTrivialMVD(allAttribs))
+            {
+                MVD mvd;
+                for (auto& attrib : fd.getLeft())
+                    mvd.AddToLeft(attrib);
+                for (auto& attrib : fd.getRight())
+                    mvd.AddToRight(attrib);
+                if (!MVDs.contains(mvd))
+                    addMVD(mvd);
+            }
+		
+    }
+
+    void Relation::SingletonRightMVDs()
+    {
+        std::set<MVD> singletonRHS;
+        for (auto& mvd : MVDs)
+        {
+            MVD temp;
+            for (const auto& attrib : mvd.getLeft())
+                temp.AddToLeft(attrib);
+            for (const auto& attrib : mvd.getRight())
+            {
+                if (temp.getLeft().contains(attrib)) continue;
+                temp.AddToRight(attrib);
+                assert (temp.getRight().size() == 1);
+                
+                singletonRHS.insert(temp);
+                temp.RemoveFromRight(attrib);
+            }
+        }
+        clearMVDs();
+        MVDs.insert(singletonRHS.begin(), singletonRHS.end());
+    }
+
+    void Relation::minimalBasisMVDs ()
+    {
+		auto allAttribs = getAttributePtrs();
+        minimalBasisFDs();
+		promoteFDsToMVDs();
+		SingletonRightMVDs();
+
+        // 1. Remove trivial MVDs
+        for (auto i = MVDs.begin(); i != MVDs.end(); )
+        {
+            if (i->isTrivialMVD(allAttribs))
+                i = MVDs.erase(i);
+            else
+                i++;
+        }
+
+		// 2. Remove implied MVDs (those that follow from the rest)
+        for (auto it = MVDs.begin(); it != MVDs.end(); )
+        {
+            if (isMVDImplied(*this, it))
+                it = MVDs.erase(it);
+            else
+                it++;
+        }
+
+		// 3. Minimize left sides
+        bool changed = true;
+        while (changed)
+        {
+            changed = false;
+            for (auto it = MVDs.begin(); it != MVDs.end(); )
+            {
+                MVD mvd = *it;
+                if (mvd.getLeft().size() < 2) {
+                    ++it;
+                    continue;
+                }
+                bool reduced = false;
+                for (auto l = mvd.getLeft().begin(); l != mvd.getLeft().end(); ++l)
+                {
+                    MVD reducedMVD = mvd;
+                    reducedMVD.RemoveFromLeft(*l);
+                    if (isMVDImplied(*this, reducedMVD)) {
+                        // Replace with reduced MVD
+                        it = MVDs.erase(it);
+                        addMVD(reducedMVD);
+                        changed = true;
+                        reduced = true;
+                        break;
+                    }
+                }
+                if (!reduced)
+                    ++it;
+            }
+		}
     }
 }

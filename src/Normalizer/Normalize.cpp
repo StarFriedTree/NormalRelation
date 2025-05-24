@@ -121,6 +121,43 @@ namespace Normalizer
         R1.minimalBasisFDs();
     }
 
+    void projectMVDs(const Relation& R, Relation& R1)
+    {
+        if (!R1.isProjection(R))
+            return;
+        if (!R1.getMVDs().empty())
+            R1.clearMVDs();
+
+		std::set<Attribute*> allAttribs;
+        for (auto* attrib : R.getAttributePtrs())
+        {
+            if (R1.searchAttribute(attrib))
+				allAttribs.insert(attrib);
+        }
+            
+        for (const auto& mvd : R.getMVDs())
+        {
+            if (mvd.getRight().size() != 1 || !allAttribs.contains(*mvd.getRight().begin()))
+                continue;
+			auto XL = Util::setIntersection(mvd.getLeft(), allAttribs);
+            auto XR = *(mvd.getRight().begin());
+
+            if (XL.empty()) continue;
+
+            auto XLR = XL;
+			XLR.insert(XR);
+            if (XL.contains(XR) || Util::isSubset(allAttribs, XLR))
+                continue;
+            MVD temp;
+			for (auto* l : XL) temp.AddToLeft(l);
+            temp.AddToRight(XR);
+            if (isMVDImplied(R, temp))
+				R1.addMVD(temp);
+        }
+		projectFDs(R, R1);
+		R1.minimalBasisMVDs();
+    }
+
     bool FDfollows(const std::set<FD>& set, std::set<FD>::const_iterator fd)
     {
         auto goal = findClosure(fd->getLeft(), set);
@@ -137,6 +174,184 @@ namespace Normalizer
         if (!reducedFD.isRightSubset(match)) return false;
 
         return true;
+    }
+
+    bool isMVDImplied(const Relation& R, const MVD& target)
+    {
+        // All MVDs are assumed to be singleton RHS
+        std::set<MVD> inferredMVDs(R.getMVDs());
+        
+		if (inferredMVDs.contains(target)) return true; // Target already in the set
+        
+        auto allAttribs = R.getAttributePtrs();
+        bool changed = true;
+
+        while (changed) 
+        {
+            changed = false;
+            std::set<MVD> toAdd;
+
+            for (const auto& mvd : inferredMVDs) 
+            {
+                const auto& U = mvd.getLeft();
+                auto* B = *mvd.getRight().begin(); // singleton RHS
+
+                // --- Augmentation: U
+                for (auto* Z : allAttribs)
+                    if (!U.contains(Z) && B != Z) 
+                    {
+                        std::set<Attribute*> UZ = U;
+                        UZ.insert(Z);
+                        // Only add UZ ?? B (UZ ?? Z is trivial)
+                        if (!UZ.contains(B)) {
+                            MVD candidate;
+                            for (auto* l : UZ) candidate.AddToLeft(l);
+                            candidate.AddToRight(B);
+                            if (!inferredMVDs.contains(candidate) && !toAdd.contains(candidate)) {
+                                toAdd.insert(candidate);
+                                changed = true;
+                                if (candidate == target) return true;
+                            }
+                        }
+                    }
+                
+                // --- Complementation: 
+                for (auto* C : allAttribs) 
+                    if (!U.contains(C) && C != B) {
+                        MVD candidate;
+                        for (auto* l : U)
+                            candidate.AddToLeft(l);
+                        candidate.AddToRight(C);
+
+                        if (!inferredMVDs.contains(candidate) && !toAdd.contains(candidate))
+                        {
+                            toAdd.insert(candidate);
+                            changed = true;
+                            if (candidate == target) return true;
+                        }
+                    }
+
+                // --- Transitivity: 
+                for (const auto& mvd1 : inferredMVDs) 
+                {
+                    const auto& X = mvd1.getLeft();
+                    auto* A = *mvd1.getRight().begin();
+
+                    for (const auto& mvd2 : inferredMVDs) {
+                        const auto& lhs2 = mvd2.getLeft();
+                        if (lhs2.size() == 1 && lhs2.contains(A)) {
+                            auto* B = *mvd2.getRight().begin();
+                            if (!X.contains(B)) {
+                                MVD transMVD;
+                                for (auto* l : X) transMVD.AddToLeft(l);
+                                transMVD.AddToRight(B);
+                                if (!inferredMVDs.contains(transMVD) && !toAdd.contains(transMVD)) {
+                                    toAdd.insert(transMVD);
+                                    changed = true;
+                                    if (transMVD == target) return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            inferredMVDs.insert(toAdd.begin(), toAdd.end());
+        }
+
+        // Final check just in case
+        return inferredMVDs.contains(target);
+    }
+
+    bool isMVDImplied(const Relation& R, std::set<MVD>::const_iterator ignore)
+    {
+        // All MVDs are assumed to be singleton RHS
+        std::set<MVD> inferredMVDs;
+        for (auto it = R.getMVDs().begin(); it != R.getMVDs().end(); ++it)
+            if (it != ignore)
+                inferredMVDs.insert(*it);
+        const MVD& target = *ignore;
+
+        if (inferredMVDs.contains(target)) return true; // Target already in the set
+
+        auto allAttribs = R.getAttributePtrs();
+        bool changed = true;
+
+        while (changed)
+        {
+            changed = false;
+            std::set<MVD> toAdd;
+
+            for (const auto& mvd : inferredMVDs)
+            {
+                const auto& U = mvd.getLeft();
+                auto* B = *mvd.getRight().begin(); // singleton RHS
+
+                // --- Augmentation:
+                for (auto* Z : allAttribs)
+                    if (!U.contains(Z) && B != Z)
+                    {
+                        std::set<Attribute*> UZ = U;
+                        UZ.insert(Z);
+                        // Only add UZ ?? B (UZ ?? Z is trivial)
+                        if (!UZ.contains(B)) {
+                            MVD candidate;
+                            for (auto* l : UZ) candidate.AddToLeft(l);
+                            candidate.AddToRight(B);
+                            if (!inferredMVDs.contains(candidate) && !toAdd.contains(candidate)) {
+                                toAdd.insert(candidate);
+                                changed = true;
+                                if (candidate == target) return true;
+                            }
+                        }
+                    }
+
+                // --- Complementation:
+                for (auto* C : allAttribs)
+                    if (!U.contains(C) && C != B) {
+                        MVD candidate;
+                        for (auto* l : U)
+                            candidate.AddToLeft(l);
+                        candidate.AddToRight(C);
+
+                        if (!inferredMVDs.contains(candidate) && !toAdd.contains(candidate))
+                        {
+                            toAdd.insert(candidate);
+                            changed = true;
+                            if (candidate == target) return true;
+                        }
+                    }
+
+                // --- Transitivity:
+                for (const auto& mvd1 : inferredMVDs)
+                {
+                    const auto& X = mvd1.getLeft();
+                    auto* A = *mvd1.getRight().begin();
+
+                    for (const auto& mvd2 : inferredMVDs) {
+                        const auto& lhs2 = mvd2.getLeft();
+                        if (lhs2.size() == 1 && lhs2.contains(A)) {
+                            auto* B = *mvd2.getRight().begin();
+                            if (!X.contains(B)) {
+                                MVD transMVD;
+                                for (auto* l : X) transMVD.AddToLeft(l);
+                                transMVD.AddToRight(B);
+                                if (!inferredMVDs.contains(transMVD) && !toAdd.contains(transMVD)) {
+                                    toAdd.insert(transMVD);
+                                    changed = true;
+                                    if (transMVD == target) return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            inferredMVDs.insert(toAdd.begin(), toAdd.end());
+        }
+
+        // Final check just in case
+        return inferredMVDs.contains(target);
     }
 
     std::set<Relation> BCNF (Relation& R)
@@ -237,5 +452,50 @@ namespace Normalizer
             output.insert(R1);
 		}
         return output;
+    }
+
+    std::set<Relation> fourNF(Relation& R)
+    {
+        R.minimalBasisMVDs();
+        std::set<Relation> output;
+
+		auto badMVD = R.findBadMVD();
+        if (badMVD == R.getMVDs().end())
+        {
+            output.insert(R);
+            return output;
+        }
+		auto attrib1 = badMVD->getAllAttributes();
+		auto attrib2 = Util::setDifference(R.getAttributePtrs(), attrib1);
+        attrib2.insert(badMVD->getLeft().begin(), badMVD->getLeft().end());
+
+        Relation R1(R.getTitle() + ".a");
+        Relation R2(R.getTitle() + ".b");
+
+        for (auto attrib : attrib1)
+            R1.addAttribute(*attrib);
+        for (auto attrib : attrib2)
+            R2.addAttribute(*attrib);
+
+		projectMVDs(R, R1);
+		projectMVDs(R, R2);
+
+        auto newBad1 = R1.findBadMVD();
+        auto newBad2 = R2.findBadMVD();
+        if (newBad1 == R1.getMVDs().end())
+            output.insert(R1);
+        else
+        {
+            auto branch1 = fourNF(R1);
+            output.insert(branch1.begin(), branch1.end());
+        }
+        if (newBad2 == R2.getMVDs().end())
+            output.insert(R2);
+        else
+        {
+            auto branch2 = fourNF(R2);
+            output.insert(branch2.begin(), branch2.end());
+        }
+		return output;
     }
 }
