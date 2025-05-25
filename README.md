@@ -92,21 +92,25 @@ std::cout << "4NF Schemas:\n" << Util::printSet(schemas4NF, " ", " ", "") << '\n
 
 
 ### BCNF Decomposition
-1.	While there exists a FD X → Y violating BCNF (X is not a superkey): 
+1.	While there exists a FD X --> Y violating BCNF (X is not a superkey): 
+	
 	a. Decompose R into: 
-		- R~1~ = X ^+^ 
-		- R~2~ = R - (R~1~ - X)
-	b. Recursively apply BCNF to R~1~ and R~2~.
+		
+		- R₁ = X⁺ 
+		- R₂ = R - (R₁ - X)
+	b. Recursively apply BCNF to R₁ and R₂.
 2.	If no violations, return R.
 
 
 ### 4NF Decomposition
 1.	Compute a minimal basis for MVDs (singleton RHS, minimal LHS, no trivial/implied).
-2.	While there exists a non-trivial MVD X →→ Y where X is not a superkey: 
+2.	While there exists a non-trivial MVD X -->> Y where X is not a superkey: 
+	
 	a. Decompose R into: 
-		- R~1~ = X ∪ Y 
-		- R~2~ = R - (Y - X) 
-	b. Recursively apply 4NF to R~1~ and R~2~.
+		
+		- R₁ = X U Y 
+		- R₂ = R - (Y - X) 
+	b. Recursively apply 4NF to R₁ and R₂.
 3.	If no violations, return R.
 
 
